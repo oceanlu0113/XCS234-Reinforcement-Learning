@@ -1,0 +1,21 @@
+MuJoCo Pro Lab license activation key, number 7693, type 6.
+
+Issued to XCS234: Reinforcement Learning, Stanford.
+
+Expires February 28, 2022.
+
+Do not share this file with anyone other than the users covered
+by your license agreement with Roboti LLC. This file activates
+MuJoCo Pro on any computer running any supported OS.
+
+Do not modify this file. Its entire content, including the
+plain text section, is used by the activation manager.
+
+08d621b58705b08d2675819268e835afe608c053c71c47834bca4b48dd382c39
+396c212d3400abbd2cacc770cd77dc5f9aeb235b4c56be8482d546cd2e331bea
+9b7fe74f10c7c0b44291a3d9926c01598c705befc2c3c7ec25bb3f4985b0f99b
+a08ea9265d7d9aa4314aa7e111d4ca1ef8ab4a4ded5415bf7a08a482df7b2df2
+30d20f19f5c16158d0b3cbb92424e8153de108d957228c8ac49b29ddd4eedfa6
+74ddcaedcc9dbe08fb9e920f4c4bd7ae8c4e838470a233e8cbebfb7bc2143ce1
+68100f9378f336203a2fc6e4410553262ce957b8ec2869f0cc05763f47ac84eb
+ab56b05a7aed5ef38a913e6f630e0793553df944004d12fcf2b084550e93b965

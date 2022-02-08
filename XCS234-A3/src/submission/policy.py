@@ -1,0 +1,174 @@
+import torch
+import torch.nn as nn
+import torch.distributions as ptd
+
+from utils.network_utils import device, np2torch
+
+
+class BasePolicy:
+    def action_distribution(self, observations):
+        """
+        Defines the conditional probability distribution over actions given an observation
+        from the environment
+
+        Args:
+            observations (torch.Tensor):  observation of state from the environment 
+                                        (shape [batch size, dim(observation space)])
+
+        Returns:
+            distribution (torch.distributions.Distribution): represents the conditional distribution over 
+                                                            actions given a particular observation
+
+        Note: 
+            See https://pytorch.org/docs/stable/distributions.html#distribution for further details
+            on distributions in Pytorch. This is an abstract method and must be overridden by subclasses.
+            It will return an object representing the policy's conditional
+            distribution(s) given the observations. The distribution will have a
+            batch shape matching that of observations, to allow for a different
+            distribution for each observation in the batch.
+        """
+        raise NotImplementedError
+
+    def act(self, observations):
+        """
+        Samples actions to be used to act in the environment
+
+        Args:
+            observations (torch.Tensor):  observation of states from the environment 
+                                        (shape [batch size, dim(observation space)])
+
+
+        Returns:
+            sampled_actions (np.array): actions sampled from the distribution over actions resulting from the
+                                        learnt policy (shape [batch size, *shape of action])
+
+        TODO:
+            Call self.action_distribution to get the distribution over actions,
+            then sample from that distribution. You will have to convert the
+            actions to a numpy array, via numpy(). See Converting torch Tensor to numpy Array section of the following tutorial
+            for further details: https://pytorch.org/tutorials/beginner/former_torchies/tensor_tutorial.html.
+            Put the result in a variable called sampled_actions (which will be returned).
+            Before converting to numpy, take into consideration the current device of the tensor and whether
+            this can be directly converted to a numpy array. Further details can be found here:
+            https://pytorch.org/docs/stable/generated/torch.Tensor.cpu.html.
+        """
+        observations = np2torch(observations)
+        ### START CODE HERE ###
+        
+        # state -> policy network -> probabilties of actions.
+        # pass the state into the distribution of the policy object
+        probs = self.action_distribution(observations)
+        # sample actions from that distribution
+        sampled_actions = probs.sample().cpu().numpy()
+        
+        ### END CODE HERE ###
+        return sampled_actions
+
+
+class CategoricalPolicy(BasePolicy, nn.Module):
+    def __init__(self, network):
+        nn.Module.__init__(self)
+        self.network = network
+
+    def action_distribution(self, observations):
+        """
+        Args:
+            observations (torch.Tensor):  observation of states from the environment 
+                                        (shape [batch size, dim(observation space)])
+
+        Returns:
+            distribution (torch.distributions.Categorical): represent the conditional distribution over 
+                                                            actions given a particular observation
+
+        Notes:
+            See https://pytorch.org/docs/stable/distributions.html#categorical for more details on 
+            categorical distributions in Pytorch
+        """
+        ### START CODE HERE ###
+                
+        # run the state/observation through our policy network to get the probabilities
+        # create distribution from those probabilities (by using distribution(policy network))
+        distribution = torch.distributions.Categorical(logits = self.network(observations))
+        
+        ### END CODE HERE ###
+        return distribution
+
+
+class GaussianPolicy(BasePolicy, nn.Module):
+    """
+
+    Args:
+        network (): 
+        action_dim (int): the dimension of the action space
+
+    TODO:
+        After the basic initialization, you should create a nn.Parameter of
+        shape [dim(action space)] and assign it to self.log_std.
+        A reasonable initial value for log_std is 0 (corresponding to an
+        initial std of 1), but you are welcome to try different values.
+
+        For more information on nn.Paramater please consult the following
+        documentation https://pytorch.org/docs/stable/generated/torch.nn.parameter.Parameter.html
+    """
+    def __init__(self, network, action_dim):
+        nn.Module.__init__(self)
+        self.network = network
+        ### START CODE HERE ###
+        
+        self.log_std = torch.nn.Parameter(torch.zeros(action_dim))        
+        
+        ### END CODE HERE ###
+
+    def std(self):
+        """
+        Returns:
+            std (torch.Tensor):  the standard deviation for each dimension of the policy's actions
+                                (shape [dim(action space)])
+
+        Hint:
+            It can be computed from self.log_std
+        """
+        ### START CODE HERE ###
+        
+        #log_std = torch.clamp(self.log_std)
+        std = self.log_std.exp()
+        
+        ### END CODE HERE ###
+        return std
+
+    def action_distribution(self, observations):
+        """
+        Args:
+            observations (torch.Tensor):  observation of states from the environment 
+                                        (shape [batch size, dim(observation space)])
+
+        Returns:
+            distribution (torch.distributions.Distribution): a pytorch distribution representing
+                a diagonal Gaussian distribution whose mean (loc) is computed by
+                self.network and standard deviation (scale) is self.std()
+
+        Note: 
+            PyTorch doesn't have a diagonal Gaussian built in, but you can
+            fashion one out of
+            (a) torch.distributions.MultivariateNormal
+            or
+            (b) A combination of torch.distributions.Normal
+                             and torch.distributions.Independent
+
+            Please consult the following documentation for further details on 
+            the use of probability distributions in Pytorch:
+            https://pytorch.org/docs/stable/distributions.html
+        """
+        ### START CODE HERE ###
+        
+        # create normal distribution
+        normal = self.network(observations)
+        
+        # create the normal distribution with self.std()
+        normal_dist = torch.distributions.Normal(self.network(observations), self.std())
+        
+        # feed this normal_dist to Independent distribution
+        distribution = torch.distributions.Independent(normal_dist, 1)
+        
+        ### END CODE HERE ###
+        return distribution
